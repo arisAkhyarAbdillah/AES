@@ -2,26 +2,75 @@ public class Main {
     public static void main(String[] args) {
         // String plainText = "Saya Kangen Kuis";
         // String key = "kriptografi";
-        String plainText = "Thats my Kung Fu";
-        String key = "Two One Nine Two";
+        // String plainText = "Thats my Kung Fu";
+        // String key = "Two One Nine Two";
 
-        for (int i = 0; i < plainText.length(); i++) {
-            System.out.print(plainText.charAt(i) + "\t");
+        // for (int i = 0; i < plainText.length(); i++) {
+        //     System.out.print(plainText.charAt(i) + "\t");
+        // }
+        // System.out.println();
+        // for (int i = 0; i < plainText.length(); i++) {
+        //     System.out.print(decToHex((int) plainText.charAt(i)) + "\t");
+        // }
+        // System.out.println("\n");
+        // for (int i = 0; i < key.length(); i++) {
+        //     System.out.print(key.charAt(i) + "\t");
+        // }
+        // System.out.println();
+        // for (int i = 0; i < key.length(); i++) {
+        //     System.out.print(decToHex((int) key.charAt(i)) + "\t");
+        // }
+
+        String[][] a = {{"02","03","01","01"},{"01","02","03","01"},{"01","01","02","03"},{"03","01","01","02"}};
+        // String[][] b = {{"D4","E0","B8","1E"},{"BF","B4","41","27"},{"5D","52","11","98"},{"30","AE","F1","E5"}};
+        String[][] b = {{"63","EB","9F","A0"},{"2F","93","92","C0"},{"AF","C7","AB","30"},{"A2","20","CB","2B"}};
+        String[][] c = mixCol(a,b);
+        for (int i=0; i<c.length; i++){
+            for (int j=0; j<c[i].length; j++){
+                System.out.printf("%4s ", c[i][j]);
+            }
+            System.out.println();
         }
-        System.out.println();
-        for (int i = 0; i < plainText.length(); i++) {
-            System.out.print(decToHex((int) plainText.charAt(i)) + "\t");
-        }
-        System.out.println("\n");
-        for (int i = 0; i < key.length(); i++) {
-            System.out.print(key.charAt(i) + "\t");
-        }
-        System.out.println();
-        for (int i = 0; i < key.length(); i++) {
-            System.out.print(decToHex((int) key.charAt(i)) + "\t");
+    }
+
+    public static String[][] mixCol(String[][] mA, String[][] mB){
+        int[][] dA = new int[mA.length][mA[1].length];
+        int[][] dB = new int[mB.length][mB[1].length];
+
+        for (int i=0; i<mA.length; i++){
+            for (int j=0; j<mA[i].length; j++){
+                dA[i][j] = hexToDec(mA[i][j]);
+            }
         }
 
+        for (int i=0; i<mB.length; i++){
+            for (int j=0; j<mB[i].length; j++){
+                dB[i][j] = hexToDec(mB[i][j]);
+            }
+        }
+        int[][] mMixed = product(dA, dB);
+        String[][] mixed = new String[mMixed.length][mMixed[1].length];
 
+        for (int i=0; i<mMixed.length; i++){
+            for (int j=0; j<mMixed[i].length; j++){
+                mixed[i][j] = decToHex(mMixed[i][j]);
+            }
+        }
+
+        return mixed;
+    }
+
+    private static int[][] product(int[][] mA, int[][] mB){
+        int[][] m = new int[mA.length][mB[1].length];
+
+        for (int i=0; i<mA.length; i++){
+            for (int j=0; j<mB[1].length; j++){
+                for (int k=0; k<mB.length; k++){
+                    m[i][j] ^= GaloisField.product(mA[i][k], mB[k][j]);
+                }
+            }
+        }
+        return m;
     }
 
     public static String decToHex(int number) {
