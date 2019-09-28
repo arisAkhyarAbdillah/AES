@@ -35,6 +35,13 @@ public class Hex {
         return hex;
     }
 
+    public Hex xor(Hex x){
+        int dV = Integer.parseInt(value, BASIS);
+        int dX = Integer.parseInt(x.get(), BASIS);
+        int xor = dV^dX;
+        return valueOf(xor);
+    }
+
     public void println(){
         System.out.println(value);
     }
