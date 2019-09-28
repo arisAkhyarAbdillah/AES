@@ -26,6 +26,15 @@ public class Hex {
         return value.charAt(i);
     }
 
+    public static Hex[] hexArrayOf(String str){
+        char[] chr = str.toCharArray();
+        Hex[] hex = new Hex[chr.length];
+        for (int i=0; i<chr.length; i++){
+            hex[i] = new Hex(Hex.valueOf((int) chr[i]).get());
+        }
+        return hex;
+    }
+
     public void println(){
         System.out.println(value);
     }

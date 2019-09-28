@@ -1,22 +1,25 @@
 public class Main {
     public static void main(String[] args) {
-        String plainText = "Thats my Kung Fu";
-        String key = "Two One Nine Two";
+        String plainText = "Kuis kan 10 nomor";
+        String key = "hdjskfhbvyeplmznv";
+
+        Hex[] pInHexs = Hex.hexArrayOf(plainText);
+        Hex[] kInHexs = Hex.hexArrayOf(key);
 
         for (int i = 0; i < plainText.length(); i++) {
-            System.out.print(plainText.charAt(i) + "\t");
+            System.out.print(plainText.charAt(i) + ((i==plainText.length()-1)?"\n":"\t"));
         }
-        System.out.println();
-        for (int i = 0; i < plainText.length(); i++) {
-            System.out.print(Hex.valueOf((int) plainText.charAt(i)).get() + "\t");
+
+        for (int i=0; i<pInHexs.length; i++){
+            System.out.print(pInHexs[i].get()+((i==pInHexs.length-1)?"\n":"\t"));
         }
-        System.out.println("\n");
+
         for (int i = 0; i < key.length(); i++) {
-            System.out.print(key.charAt(i) + "\t");
+            System.out.print(key.charAt(i) + ((i==key.length()-1)?"\n":"\t"));
         }
-        System.out.println();
-        for (int i = 0; i < key.length(); i++) {
-            System.out.print(Hex.valueOf((int) key.charAt(i)).get() + "\t");
+
+        for (int i=0; i<kInHexs.length; i++){
+            System.out.print(kInHexs[i].get()+((i==kInHexs.length-1)?"\n":"\t"));
         }
 
         // Mix Columns Testing
