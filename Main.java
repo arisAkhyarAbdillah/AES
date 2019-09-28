@@ -104,10 +104,10 @@ public class Main {
             x = a.toDec();
             y = b.toDec();
         }
-        return new Hex(sbox[x][y]);
+        return new Hex(SBOX[x][y]);
     }
 
-    static String[][] sbox = {
+    public static final String[][] SBOX = {
         {"63", "7C", "77", "7B", "F2", "6B", "6F", "C5", "30", "01", "67", "2B", "FE", "D7", "AB", "76"},
         {"CA", "82", "C9", "7D", "FA", "59", "47", "F0", "AD", "A2", "A2", "AF", "9C", "A4", "72", "C0"},
         {"B7", "FD", "93", "26", "36", "3F", "F7", "CC", "34", "A5", "E5", "F1", "71", "D8", "31", "15"},
