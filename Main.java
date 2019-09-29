@@ -1,59 +1,92 @@
+import java.util.Scanner;
 public class Main {
+    private static Scanner scan = new Scanner(System.in);
     private static int round = 0;
     private static final String[] RCON = new String[]{"01","02","04","08","10","20","40","80","1B","36"};
     public static void main(String[] args) {
         String plainText = "Two One Nine Two";
         String key = "Thats my Kung Fu";
+        System.out.println("PLAIN TEXT: "+plainText);
+        System.out.println("CHIPER KEY: "+key);
 
         Hex[] pInHexs = Hex.hexArrayOf(plainText);
         Hex[] kInHexs = Hex.hexArrayOf(key);
+        Hex[][] state = toMatrix(pInHexs);
+        System.out.println("\nTRANSLATION TO HEX:\n");
+        System.out.print("Plain text: "); printArray(pInHexs);
+        System.out.print("Chiper Key: "); printArray(kInHexs);
 
         Hex[][] keys = new Hex[11][16];
-        keys[0] = kInHexs;
 
-        System.out.print("Round "+round+": ");
+        scan.nextLine();
+
+        // First RoundKey
+        System.out.println("\n<==================> FIRST ROUND <==================>\n");
+        keys[0] = kInHexs;
+        System.out.print("Expand Key-"+round+": ");
         printArray(keys[0]);
+
+        // First Add RoundKey
+        System.out.println("\nADD ROUND KEY "+round);
+        Hex[][] roundKey = toMatrix(keys[0]);
+        state = addRoundKey(state, roundKey);
+        printMatrix(state);
+        scan.nextLine();
+
         for (int i=1; i<keys.length; i++){
+            System.out.println("\n<===================> ROUND "+(round+1)+" <===================>\n");
+
+            // Subtitotion Bytes
+            for (int j=0; j<state.length; j++){
+                for (int k=0; k<state[j].length; k++) {
+                    state[j][k] = sBox(state[j][k]);
+                }
+            }
+            System.out.println("\nSUBTITUTION BYTES: ");
+            printMatrix(state);
+            scan.nextLine();
+
+            // Shift Row
+            state = shiftRows(state);
+            System.out.println("\nSHIFT ROWS: ");
+            printMatrix(state);
+            scan.nextLine();
+
+            // Mix Column
+            if (i<keys.length-1){
+                String[][] a = {{"02","03","01","01"},{"01","02","03","01"},{"01","01","02","03"},{"03","01","01","02"}};
+                Hex[][] hA = new Hex[a.length][a[0].length];
+                for (int j=0; j<a.length; j++){
+                    for (int k=0; k<a[0].length; k++){
+                        hA[j][k] = new Hex(a[j][k]);
+                    }
+                }
+                state = mixCol(hA, state);
+                System.out.println("\nMIX COLUMN: ");
+                printMatrix(state);
+                scan.nextLine();
+            }
+
+            // New RoundKey
             keys[i] = expandKey(keys[i-1]);
-            System.out.print("Round "+round+": ");
+            System.out.print("\nEXPAND KEY-"+round+": ");
             printArray(keys[i]);
+
+            // Add RoundKey
+            roundKey = toMatrix(keys[i]);
+            state = addRoundKey(state, roundKey);
+            System.out.println("\nADD ROUNDKEY: ");
+            printMatrix(state);
+            scan.nextLine();
         }
 
-        // for (int i = 0; i < plainText.length(); i++) {
-        //     System.out.print(plainText.charAt(i) + ((i==plainText.length()-1)?"\n":"\t"));
-        // }
-
-        // for (int i=0; i<pInHexs.length; i++){
-        //     System.out.print(pInHexs[i].get()+((i==pInHexs.length-1)?"\n":"\t"));
-        // }
-
-        // for (int i = 0; i < key.length(); i++) {
-        //     System.out.print(key.charAt(i) + ((i==key.length()-1)?"\n":"\t"));
-        // }
-
-        // for (int i=0; i<kInHexs.length; i++){
-        //     System.out.print(kInHexs[i].get()+((i==kInHexs.length-1)?"\n":"\t"));
-        // }
-
-
-        // Mix Columns Testing
-        // String[][] a = {{"02","03","01","01"},{"01","02","03","01"},{"01","01","02","03"},{"03","01","01","02"}};
-        // // String[][] b = {{"D4","E0","B8","1E"},{"BF","B4","41","27"},{"5D","52","11","98"},{"30","AE","F1","E5"}};
-        // String[][] b = {{"63","EB","9F","A0"},{"2F","93","92","C0"},{"AF","C7","AB","30"},{"A2","20","CB","2B"}};
-        // Hex[][] hA = new Hex[a.length][a[0].length];
-        // Hex[][] hB = new Hex[b.length][b[0].length];
-        // for (int i=0; i<a.length; i++){
-        //     for (int j=0; j<a[0].length; j++){
-        //         hA[i][j] = new Hex(a[i][j]);
-        //     }
-        // }
-        // for (int i=0; i<b.length; i++){
-        //     for (int j=0; j<b[0].length; j++){
-        //         hB[i][j] = new Hex(b[i][j]);
-        //     }
-        // }
-        // Hex[][] c = mixCol(hA,hB);
-        // printMatrix(c);
+        // Print Chiper Text
+        System.out.print("\nCHIPER TEXT: ");
+        for (int i=0; i<state.length; i++){
+            for (int j=0; j<state[i].length; j++) {
+                System.out.printf("%4s", state[j][i].get());
+            }
+        }
     }
 
     public static void printMatrix(Hex[][] m){
@@ -70,6 +103,54 @@ public class Main {
             System.out.printf("%5s", x.get());
         }
         System.out.println();
+    }
+
+    private static Hex[][] shiftRows(Hex[][] state){
+        Hex[][] temp = new Hex[state.length][state[0].length];
+        temp[1][0] = state[1][1];
+        temp[2][0] = state[2][2];
+        temp[3][0] = state[3][3];
+        temp[1][1] = state[1][2];
+        temp[2][1] = state[2][3];
+        temp[3][1] = state[3][0];
+        temp[1][2] = state[1][3];
+        temp[2][2] = state[2][0];
+        temp[3][2] = state[3][1];
+        temp[1][3] = state[1][0];
+        temp[2][3] = state[2][1];
+        temp[3][3] = state[3][2];
+        for (int i=0; i<state[0].length; i++) {
+            temp[0][i] = state[0][i];            
+        }
+        return temp;
+    }
+
+    private static Hex[][] toMatrix(Hex[] arr){
+        Hex[][] matrix = new Hex[arr.length/4][arr.length/4];
+        for (int i=0; i<arr.length; i++){
+            matrix[i%4][i/4] = arr[i];
+        }
+        return matrix;
+    }
+
+    private static Hex[] addRoundKey(Hex[] state, Hex[] key){
+        Hex[] result = new Hex[state.length];
+        for (int i=0; i<state.length; i++){
+            result[i] = state[i].xor(key[i]);
+            System.out.printf("%5s", result[i].get());
+        }
+        System.out.println();
+        return result;
+    }
+
+    private static Hex[][] addRoundKey(Hex[][] state, Hex[][] key){
+        Hex[][] result = new Hex[state.length][state[0].length];
+        for (int i=0; i<result.length; i++){
+            for (int j=0; j<result[i].length; j++) {
+                result[i][j] = state[i][j].xor(key[i][j]);
+            }
+        }
+        return result;
     }
 
     public static Hex[][] mixCol(Hex[][] mA, Hex[][] mB){
