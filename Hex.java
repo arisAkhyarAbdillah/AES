@@ -6,6 +6,10 @@ public class Hex {
         this.value = value;
     }
 
+    public void setValue(String value){
+        this.value = value;
+    }
+
     public String get(){
         return value;
     }

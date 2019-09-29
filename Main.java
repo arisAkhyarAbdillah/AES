@@ -2,6 +2,7 @@ import java.util.Scanner;
 public class Main {
     private static Scanner scan = new Scanner(System.in);
     private static int round = 0;
+    private static Hex[][] state;
     private static final String[] RCON = new String[]{"01","02","04","08","10","20","40","80","1B","36"};
     public static void main(String[] args) {
         String plainText = "Two One Nine Two";
@@ -11,14 +12,16 @@ public class Main {
 
         Hex[] pInHexs = Hex.hexArrayOf(plainText);
         Hex[] kInHexs = Hex.hexArrayOf(key);
-        Hex[][] state = toMatrix(pInHexs);
+        state = toMatrix(pInHexs);
         System.out.println("\nTRANSLATION TO HEX:\n");
-        System.out.print("Plain text: "); printArray(pInHexs);
-        System.out.print("Chiper Key: "); printArray(kInHexs);
+        System.out.print("PLAIN TEXT: "); printArray(pInHexs);
+        System.out.print("CHIPER KEY: "); printArray(kInHexs);
+        System.out.println("\nSTATE MATRIX: "); printMatrix(state);
+        System.out.println("\nKEY MATRIX: "); printMatrix(toMatrix(kInHexs));
 
         Hex[][] keys = new Hex[11][16];
 
-        scan.nextLine();
+        command(scan.nextLine());
 
         // First RoundKey
         System.out.println("\n<==================> FIRST ROUND <==================>\n");
@@ -31,7 +34,7 @@ public class Main {
         Hex[][] roundKey = toMatrix(keys[0]);
         state = addRoundKey(state, roundKey);
         printMatrix(state);
-        scan.nextLine();
+        command(scan.nextLine());
 
         for (int i=1; i<keys.length; i++){
             System.out.println("\n<===================> ROUND "+(round+1)+" <===================>\n");
@@ -44,13 +47,13 @@ public class Main {
             }
             System.out.println("\nSUBTITUTION BYTES: ");
             printMatrix(state);
-            scan.nextLine();
+            command(scan.nextLine());
 
             // Shift Row
             state = shiftRows(state);
             System.out.println("\nSHIFT ROWS: ");
             printMatrix(state);
-            scan.nextLine();
+            command(scan.nextLine());
 
             // Mix Column
             if (i<keys.length-1){
@@ -64,7 +67,7 @@ public class Main {
                 state = mixCol(hA, state);
                 System.out.println("\nMIX COLUMN: ");
                 printMatrix(state);
-                scan.nextLine();
+                command(scan.nextLine());
             }
 
             // New RoundKey
@@ -77,16 +80,21 @@ public class Main {
             state = addRoundKey(state, roundKey);
             System.out.println("\nADD ROUNDKEY: ");
             printMatrix(state);
-            scan.nextLine();
+            command(scan.nextLine());
         }
 
         // Print Chiper Text
         System.out.print("\nCHIPER TEXT: ");
         for (int i=0; i<state.length; i++){
             for (int j=0; j<state[i].length; j++) {
-                System.out.printf("%4s", state[j][i].get());
+                if (state[i][j].length()==1){
+                    state[i][j].setValue("0" + state[i][j].get());
+                }
+                System.out.printf("%3s", state[j][i].get());
             }
         }
+
+        System.out.print("\n\n<======================> END <======================>\n");
     }
 
     public static void printMatrix(Hex[][] m){
@@ -100,7 +108,7 @@ public class Main {
 
     public static void printArray(Hex[] arr){
         for (Hex x: arr){
-            System.out.printf("%5s", x.get());
+            System.out.printf("%3s", x.get());
         }
         System.out.println();
     }
@@ -212,55 +220,71 @@ public class Main {
     
     public static Hex[] expandKey(Hex[] fKey){
         Hex[] key = new Hex[16];
-        // keys[0] = fKey;
+        
+        Hex[][] words = new Hex[8][4];
 
-        // for (int k=1; k<fKey.length; k++){
-            Hex[][] words = new Hex[8][4];
+        for (int i=0; i<fKey.length; i++){
+            words[i/4][i%4] = fKey[i];
+        }
 
-            for (int i=0; i<fKey.length; i++){
-                words[i/4][i%4] = fKey[i];
+        Hex[] w3 = new Hex[words[3].length];
+        
+        for (int i=0; i<w3.length; i++){
+            w3[i] = words[3][i];
+        }
+
+        Hex temp = w3[0];
+        for (int i=0; i<w3.length-1; i++){
+            w3[i] = w3[i+1];
+        }
+        w3[3] = temp;
+
+        for (int i=0; i<w3.length; i++){
+            w3[i] = sBox(w3[i]);
+        }
+
+        Hex rcon = new Hex(RCON[round]);
+        w3[0] = w3[0].xor(rcon);
+        
+        for (int i=0; i<words[4].length; i++){
+            words[4][i] = words[0][i].xor(w3[i]);
+        }
+        
+        for (int i=5; i<words.length; i++){
+            for (int j=0; j<words[i].length; j++){
+                words[i][j] = words[i-1][j].xor(words[i-4][j]);
             }
+        }
 
-            Hex[] w3 = new Hex[words[3].length];
-            
-            for (int i=0; i<w3.length; i++){
-                w3[i] = words[3][i];
-            }
+        for (int i=0; i<fKey.length; i++){
+            key[i] = words[(i/4)+4][i%4];
+        }
 
-            Hex temp = w3[0];
-            for (int i=0; i<w3.length-1; i++){
-                w3[i] = w3[i+1];
-            }
-            w3[3] = temp;
-
-            for (int i=0; i<w3.length; i++){
-                w3[i] = sBox(w3[i]);
-            }
-
-            Hex rcon = new Hex(RCON[round]);
-            w3[0] = w3[0].xor(rcon);
-            // words[3] = w3;
-            // printArray(w3);
-            
-            for (int i=0; i<words[4].length; i++){
-                words[4][i] = words[0][i].xor(w3[i]);
-            }
-            
-            for (int i=5; i<words.length; i++){
-                for (int j=0; j<words[i].length; j++){
-                    words[i][j] = words[i-1][j].xor(words[i-4][j]);
-                }
-                // System.out.print("W"+i+" = ");
-                // printArray(words[i]);
-            }
-
-            for (int i=0; i<fKey.length; i++){
-                key[i] = words[(i/4)+4][i%4];
-            }
-            // }
-
-            round++;
+        round++;
         return key;
+    }
+
+    private static String command(String cmd){
+        switch (cmd){
+            case "sbox":
+                for (int i=0; i<SBOX.length; i++) {
+                    for (int j=0; j<SBOX[i].length; j++) {
+                        System.out.printf("%4s", SBOX[i][j]);
+                    }
+                    System.out.println();
+                }
+                return command(scan.nextLine());
+            case "round":
+                System.out.println(round);
+                return command(scan.nextLine());
+            case "state":
+                printMatrix(state);
+                return command(scan.nextLine());
+            case "":
+                return "null";
+            default:
+                return command(scan.nextLine());
+        }
     }
 
     public static final String[][] SBOX = {
