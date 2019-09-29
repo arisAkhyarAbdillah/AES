@@ -45,4 +45,8 @@ public class Hex {
     public void println(){
         System.out.println(value);
     }
+
+    public void println(String comment){
+        System.out.println(comment+value);
+    }
 }

@@ -1,26 +1,40 @@
 public class Main {
+    private static int round = 0;
+    private static final String[] RCON = new String[]{"01","02","04","08","10","20","40","80","1B","36"};
     public static void main(String[] args) {
-        String plainText = "Kuis kan 10 nomor";
-        String key = "hdjskfhbvyeplmznv";
+        String plainText = "Two One Nine Two";
+        String key = "Thats my Kung Fu";
 
         Hex[] pInHexs = Hex.hexArrayOf(plainText);
         Hex[] kInHexs = Hex.hexArrayOf(key);
 
-        for (int i = 0; i < plainText.length(); i++) {
-            System.out.print(plainText.charAt(i) + ((i==plainText.length()-1)?"\n":"\t"));
+        Hex[][] keys = new Hex[11][16];
+        keys[0] = kInHexs;
+
+        System.out.print("Round "+round+": ");
+        printArray(keys[0]);
+        for (int i=1; i<keys.length; i++){
+            keys[i] = expandKey(keys[i-1]);
+            System.out.print("Round "+round+": ");
+            printArray(keys[i]);
         }
 
-        for (int i=0; i<pInHexs.length; i++){
-            System.out.print(pInHexs[i].get()+((i==pInHexs.length-1)?"\n":"\t"));
-        }
+        // for (int i = 0; i < plainText.length(); i++) {
+        //     System.out.print(plainText.charAt(i) + ((i==plainText.length()-1)?"\n":"\t"));
+        // }
 
-        for (int i = 0; i < key.length(); i++) {
-            System.out.print(key.charAt(i) + ((i==key.length()-1)?"\n":"\t"));
-        }
+        // for (int i=0; i<pInHexs.length; i++){
+        //     System.out.print(pInHexs[i].get()+((i==pInHexs.length-1)?"\n":"\t"));
+        // }
 
-        for (int i=0; i<kInHexs.length; i++){
-            System.out.print(kInHexs[i].get()+((i==kInHexs.length-1)?"\n":"\t"));
-        }
+        // for (int i = 0; i < key.length(); i++) {
+        //     System.out.print(key.charAt(i) + ((i==key.length()-1)?"\n":"\t"));
+        // }
+
+        // for (int i=0; i<kInHexs.length; i++){
+        //     System.out.print(kInHexs[i].get()+((i==kInHexs.length-1)?"\n":"\t"));
+        // }
+
 
         // Mix Columns Testing
         // String[][] a = {{"02","03","01","01"},{"01","02","03","01"},{"01","01","02","03"},{"03","01","01","02"}};
@@ -49,6 +63,13 @@ public class Main {
             }
             System.out.println();
         }
+    }
+
+    public static void printArray(Hex[] arr){
+        for (Hex x: arr){
+            System.out.printf("%5s", x.get());
+        }
+        System.out.println();
     }
 
     public static Hex[][] mixCol(Hex[][] mA, Hex[][] mB){
@@ -105,6 +126,60 @@ public class Main {
             y = b.toDec();
         }
         return new Hex(SBOX[x][y]);
+    }
+
+    
+    public static Hex[] expandKey(Hex[] fKey){
+        Hex[] key = new Hex[16];
+        // keys[0] = fKey;
+
+        // for (int k=1; k<fKey.length; k++){
+            Hex[][] words = new Hex[8][4];
+
+            for (int i=0; i<fKey.length; i++){
+                words[i/4][i%4] = fKey[i];
+            }
+
+            Hex[] w3 = new Hex[words[3].length];
+            
+            for (int i=0; i<w3.length; i++){
+                w3[i] = words[3][i];
+            }
+
+            Hex temp = w3[0];
+            for (int i=0; i<w3.length-1; i++){
+                w3[i] = w3[i+1];
+            }
+            w3[3] = temp;
+
+            for (int i=0; i<w3.length; i++){
+                w3[i] = sBox(w3[i]);
+            }
+
+            Hex rcon = new Hex(RCON[round]);
+            w3[0] = w3[0].xor(rcon);
+            // words[3] = w3;
+            // printArray(w3);
+            
+            for (int i=0; i<words[4].length; i++){
+                words[4][i] = words[0][i].xor(w3[i]);
+            }
+            
+            for (int i=5; i<words.length; i++){
+                for (int j=0; j<words[i].length; j++){
+                    words[i][j] = words[i-1][j].xor(words[i-4][j]);
+                }
+                // System.out.print("W"+i+" = ");
+                // printArray(words[i]);
+            }
+
+            for (int i=0; i<fKey.length; i++){
+                key[i] = words[(i/4)+4][i%4];
+            }
+            // }
+
+            round++;
+        return key;
     }
 
     public static final String[][] SBOX = {
