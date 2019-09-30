@@ -32,6 +32,7 @@ public class Main {
         // First Add RoundKey
         System.out.println("\nADD ROUND KEY "+round);
         Hex[][] roundKey = toMatrix(keys[0]);
+        printOpsMtrx(state, roundKey, "^");
         state = addRoundKey(state, roundKey);
         printMatrix(state);
         command(scan.nextLine());
@@ -64,8 +65,9 @@ public class Main {
                         hA[j][k] = new Hex(a[j][k]);
                     }
                 }
-                state = mixCol(hA, state);
                 System.out.println("\nMIX COLUMN: ");
+                printOpsMtrx(hA, state, "*");
+                state = mixCol(hA, state);
                 printMatrix(state);
                 command(scan.nextLine());
             }
@@ -77,8 +79,9 @@ public class Main {
 
             // Add RoundKey
             roundKey = toMatrix(keys[i]);
-            state = addRoundKey(state, roundKey);
             System.out.println("\nADD ROUNDKEY: ");
+            printOpsMtrx(state, roundKey, "^");
+            state = addRoundKey(state, roundKey);
             printMatrix(state);
             command(scan.nextLine());
         }
@@ -141,16 +144,19 @@ public class Main {
         return matrix;
     }
 
-    private static Hex[] addRoundKey(Hex[] state, Hex[] key){
-        Hex[] result = new Hex[state.length];
-        for (int i=0; i<state.length; i++){
-            result[i] = state[i].xor(key[i]);
-            System.out.printf("%5s", result[i].get());
+    private static void printOpsMtrx(Hex[][] matrix1, Hex[][] matrix2, String ops){
+        for (int i = 0; i < matrix1.length; i++) {
+            for (int j = 0; j < matrix1[0].length; j++) {
+                System.out.printf("%4s", matrix1[i][j].get());
+            }
+            System.out.printf("%2s%2s%2s", "",(i==0)?ops:" ", "");
+            for (int j = 0; j < matrix2[0].length; j++) {
+                System.out.printf("%4s", matrix2[i][j].get());
+            }
+            System.out.printf("%2s%2s%2s", "", (i==0)?"=":" ", "\n");
         }
         System.out.println();
-        return result;
     }
-
     private static Hex[][] addRoundKey(Hex[][] state, Hex[][] key){
         Hex[][] result = new Hex[state.length][state[0].length];
         for (int i=0; i<result.length; i++){
